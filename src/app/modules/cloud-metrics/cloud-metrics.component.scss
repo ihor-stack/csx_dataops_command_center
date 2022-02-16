@@ -1,0 +1,34 @@
+$gapWidth: 10px;
+$marginWidth: 4px;
+$gapColor: #8388a4;
+
+.content {
+  display: flex;
+  border: $marginWidth solid #fff;
+}
+
+.cloud-metrics-graphs {
+  background: $gapColor;
+  flex-grow: 1;
+  display: grid;
+  grid-template-rows: max-content max-content;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: $gapWidth $gapWidth;
+  place-items: stretch;
+
+  & > div {
+    background: #fff;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.indicators {
+  margin-left: $marginWidth;
+  border-left: $gapWidth solid $gapColor;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
