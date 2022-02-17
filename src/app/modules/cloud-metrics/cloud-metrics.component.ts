@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 @Component({
   selector: 'app-cloud-metrics',
   templateUrl: './cloud-metrics.component.html',
-  styleUrls: ['./cloud-metrics.component.scss']
+  styleUrls: ['./cloud-metrics.component.scss'],
 })
 export class CloudMetricsComponent implements OnInit {
   readonly chartFont = 'Nunito';
@@ -12,11 +12,11 @@ export class CloudMetricsComponent implements OnInit {
   readonly chartFontColor = '#000';
 
   public graphData = {
-    line: {color: '#3B426E', width: 3},
-    name: "historical",
-    type: "scatter",
+    line: { color: '#3B426E', width: 3 },
+    name: 'historical',
+    type: 'scatter',
     x: [1, 2, 3, 4],
-    y: [10, 15, 13, 17]
+    y: [10, 15, 13, 17],
   };
 
   public graphLayout = {
@@ -25,10 +25,10 @@ export class CloudMetricsComponent implements OnInit {
       font: {
         family: this.chartFont,
         size: 14,
-        //color: this.chartFontColor
+        // color: this.chartFontColor
       },
       xref: 'paper',
-      xanchor: 'center'
+      xanchor: 'center',
     },
     width: 300,
     height: 250,
@@ -39,20 +39,20 @@ export class CloudMetricsComponent implements OnInit {
       r: 20,
       b: 20,
       t: 50,
-      pad: 0
+      pad: 0,
     },
     xaxis: {
       tickfont: {
         family: this.chartFont,
         size: 12,
-        color: this.chartFontColor
+        color: this.chartFontColor,
       },
     },
     yaxis: {
       tickfont: {
         family: this.chartFont,
         size: 12,
-        color: this.chartFontColor
+        color: this.chartFontColor,
       },
     },
     showlegend: true,
@@ -63,53 +63,53 @@ export class CloudMetricsComponent implements OnInit {
       font: {
         family: this.chartFont,
         size: 12,
-        color: '#000'
-      }
-    }
+        color: '#000',
+      },
+    },
   };
 
   public graphConfig = {
     displayModeBar: false,
-    responsive: true
+    responsive: true,
   };
 
   public indicator1 = [{
     domain: {
-        x: [0, 1],
-        y: [0, 1]
+      x: [0, 1],
+      y: [0, 1],
     },
     value: 450,
     title: {
-        text: 'Max TaskInstanceFailures',
-        color: '#000',
-        font: {
-            size: 14
-        }
+      text: 'Max TaskInstanceFailures',
+      color: '#000',
+      font: {
+        size: 14,
+      },
     },
-    type: "indicator",
-    mode: "gauge+number",
+    type: 'indicator',
+    mode: 'gauge+number',
     delta: {
-        reference: 400
+      reference: 400,
     },
     gauge: {
-        axis: {
-            range: [null, 500]
+      axis: {
+        range: [null, 500],
+      },
+      steps: [{
+        range: [0, 250],
+        color: 'lightgray',
+      }, {
+        range: [250, 400],
+        color: 'gray',
+      }],
+      threshold: {
+        line: {
+          color: 'red',
+          width: 4,
         },
-        steps: [{
-            range: [0, 250],
-            color: "lightgray"
-        }, {
-            range: [250, 400],
-            color: "gray"
-        }],
-        threshold: {
-            line: {
-                color: "red",
-                width: 4
-            },
-            thickness: 0.75,
-            value: 490
-        }
+        thickness: 0.75,
+        value: 490
+      }
     }
   }];
 
@@ -123,19 +123,20 @@ export class CloudMetricsComponent implements OnInit {
       r: 30,
       b: 20,
       t: 0,
-      pad: 0
+      pad: 0,
     },
     font: {
-        family: 'Nunito',
-        size: 14,
-        color: '#000'
-    }
+      family: 'Nunito',
+      size: 14,
+      color: '#000',
+    },
   };
 
-  constructor() { }
+  // constructor() { }
 
+  dummy = 0;
   ngOnInit(): void {
-    console.log('init');
+    this.dummy = 1;
+    // console.log('init');
   }
-
 }

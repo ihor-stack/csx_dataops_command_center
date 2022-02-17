@@ -5,7 +5,9 @@ import { RoutePaths } from '@defs/route-paths';
 const routes: Routes = [
   {
     path: RoutePaths.CloudMetrics,
-    loadChildren: () => import('@modules/cloud-metrics/cloud-metrics.module').then(m => m.CloudMetricsModule)
+    loadChildren: () => import('@modules/cloud-metrics/cloud-metrics.module').then(
+      (m) => m.CloudMetricsModule
+    )
   },
   {
     path: '**',

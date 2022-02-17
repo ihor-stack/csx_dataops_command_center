@@ -28,6 +28,7 @@
       "@core/*": ["src/app/core/*"],
       "@defs/*": ["src/app/core/defs/*"],
       "@modules/*": ["src/app/modules/*"],
+      "@services/*": ["src/app/core/services/*"],
       "@utils/*": ["src/app/utils/*"]
     }
   },

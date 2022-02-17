@@ -9,8 +9,7 @@ describe('CloudMetricsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ CloudMetricsComponent ]
-    })
-    .compileComponents();
+    }).compileComponents();
   });
 
   beforeEach(() => {

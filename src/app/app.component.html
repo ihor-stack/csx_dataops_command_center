@@ -1,2 +1,55 @@
 
-<router-outlet></router-outlet>
+<header class="top-header">
+  <a class="logo-link" [routerLink]="Routes.Home | link"><img src="/assets/img/kedion_logo.png" /></a>
+  <div class="title">Product Discovery Suite</div>
+  <div class="header-icons">
+    <span class="icon-home"><a [routerLink]="Routes.Home | link"><img src="/assets/img/home.svg" /></a></span>
+    <span class="icon-settings"><img src="/assets/img/settings.svg" (click)="showNavMenu = true"/></span>
+  </div>
+</header>
+
+<header class="mid-header">
+  <img class="csx-logo" src="/assets/img/csxlogo_2.png" />
+  <div class="title">COMMAND CENTER</div>
+  <div class="header-icons">
+    <span class="icon-bell"><img src="/assets/img/bell.svg" (click)="onBell()"/></span>
+    <span class="icon-settings"><img src="/assets/img/settings.svg" (click)="showModulesMenu = true"/></span>
+  </div>
+</header>
+
+<nav>
+  <a [routerLink]="[]">Airflow (MWAA)</a>
+  <a [routerLink]="[]">AmplifyHosting</a>
+  <a [routerLink]="[]">ApiGateway</a>
+  <a [routerLink]="[]">Billing</a>
+  <a [routerLink]="[]">EBS</a>
+  <a [routerLink]="[]">EC2</a>
+  <a [routerLink]="[]">EFS</a>
+  <a [routerLink]="[]">AWS / Kafka</a>
+  <a [routerLink]="[]">Lambda</a>
+</nav>
+
+<div class="page">
+  <router-outlet></router-outlet>
+</div>
+
+<div
+  [ngClass]="{ 'menu-container': true, visible: showNavMenu || showModulesMenu}"
+  (click)="hideSideMenu()"
+  >
+  <div [ngClass]="{'side-menu': true, 'nav-menu': true, visible: showNavMenu}">
+    <a [routerLink]="">Home</a>
+    <a [routerLink]="" class="disabled">Request Application</a>
+    <a [routerLink]="" class="disabled">Developer Portal</a>
+    <a [routerLink]="" class="disabled">Support</a>
+    <a [routerLink]="">Logout</a>
+  </div>
+
+  <div [ngClass]="{'side-menu': true, 'modules-menu': true, visible: showModulesMenu}">
+    <a [routerLink]="">Cloud Metrics Dashboard</a>
+    <a [routerLink]="">Data Science Dashboard</a>
+    <a [routerLink]="" class="disabled">ADA Architecture</a>
+    <a [routerLink]="" class="disabled">ADA Orchestration</a>
+    <a [routerLink]="">User Configuration</a>
+  </div>
+</div>

@@ -20,6 +20,7 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
+  // eslint-disable-next-line @typescript-eslint/quotes
   it(`should have as title 'kedion'`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
