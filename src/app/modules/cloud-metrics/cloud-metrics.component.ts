@@ -1,5 +1,23 @@
 import { Component, OnInit } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { switchMap, Subject, forkJoin } from 'rxjs';
+import { distinctUntilChanged } from 'rxjs/operators';
 
+import { AwsService } from '@services/aws.service';
+import { LoggerService } from '@services/logger.service';
+import { SpinnerService } from '@services/spinner.service';
+
+interface NsMetric {
+  name: string;
+  graphData: {
+    line: { color: '#3B426E', width: 3 },
+    type: 'scatter',
+    x: string[],
+    y: number[]
+  }
+}
+
+@UntilDestroy()
 @Component({
   selector: 'app-cloud-metrics',
   templateUrl: './cloud-metrics.component.html',
@@ -10,16 +28,35 @@ export class CloudMetricsComponent implements OnInit {
   readonly chartBg = '#ccceda';
   readonly chartPlotColor = '#3b426e';
   readonly chartFontColor = '#000';
+  readonly activeNamespaces = [
+    'AmazonMWAA',
+    'AmplifyHosting',
+    'ApiGateway',
+    'Billing',
+    'EBS',
+    'EC2',
+    'EFS',
+    'Kafka',
+    'Lambda'
+  ];
+
+  namespaces: string[] = [];
+  displayedNamespace$ = new Subject<string>();
+  displayedNamespace: string = '';
+
+  nsMetrics: NsMetric[] = [];
+  private currentMetricsNames: string[] = [];
+  nsMetricsTail: number[] = [];
 
   public graphData = {
     line: { color: '#3B426E', width: 3 },
-    name: 'historical',
     type: 'scatter',
     x: [1, 2, 3, 4],
     y: [10, 15, 13, 17],
   };
 
   public graphLayout = {
+    /*
     title: {
       text: 'Title',
       font: {
@@ -30,6 +67,7 @@ export class CloudMetricsComponent implements OnInit {
       xref: 'paper',
       xanchor: 'center',
     },
+    */
     width: 300,
     height: 250,
     paper_bgcolor: 'transparent',
@@ -37,8 +75,8 @@ export class CloudMetricsComponent implements OnInit {
     margin: {
       l: 20,
       r: 20,
-      b: 20,
-      t: 50,
+      b: 50,
+      t: 20,
       pad: 0,
     },
     xaxis: {
@@ -55,7 +93,7 @@ export class CloudMetricsComponent implements OnInit {
         color: this.chartFontColor,
       },
     },
-    showlegend: true,
+    showlegend: false,
     legend: {
       x: 0,
       y: 1,
@@ -132,11 +170,92 @@ export class CloudMetricsComponent implements OnInit {
     },
   };
 
-  // constructor() { }
+  constructor(
+    private awsService: AwsService,
+    private loggerService: LoggerService,
+    private spinnerService: SpinnerService
+  ) { }
 
-  dummy = 0;
   ngOnInit(): void {
-    this.dummy = 1;
-    // console.log('init');
+    this.spinnerService.show(true);
+
+    this.awsService.listCloudwatchNamespaces().subscribe(
+      (namespaces) => { // process namespaces
+        this.namespaces = namespaces.filter(
+          // eslint-disable-next-line arrow-body-style
+          (name) => {
+            return this.activeNamespaces.reduce(
+              (acc, item) => name.includes(item) || acc,
+              false as boolean
+            );
+          }
+        );
+        this.loggerService.log('filtered namespaces', this.namespaces);
+
+        this.displayedNamespace$.next(this.namespaces[1]);
+      }
+    );
+
+    this.displayedNamespace$
+      .pipe(
+        untilDestroyed(this),
+        distinctUntilChanged(),
+        switchMap((ns) => {
+          this.loggerService.log('active NS', ns);
+
+          this.displayedNamespace = ns;
+          this.spinnerService.show(true);
+
+          return this.awsService.listCloudwatchMetrics(ns);
+        }),
+        switchMap((nsMetric) => { // process namespace metrics
+          this.loggerService.log('metric', nsMetric);
+
+          this.currentMetricsNames = Object.keys(nsMetric);
+          this.loggerService.log('metricsNames', this.currentMetricsNames);
+
+          const requests = this.currentMetricsNames.map(
+            (metricName) => {
+              const dims = nsMetric[metricName];
+
+              return this.awsService.fetchCloudwatchMetrics(
+                this.displayedNamespace,
+                metricName,
+                dims[0][1]
+              );
+            }
+          );
+
+          return forkJoin(requests);
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.loggerService.log('data', data);
+
+          // eslint-disable-next-line arrow-body-style
+          this.nsMetrics = this.currentMetricsNames.map((metricName, idx): NsMetric => {
+            return {
+              name: metricName,
+              graphData: {
+                line: { color: '#3B426E', width: 3 },
+                type: 'scatter',
+                x: data[idx].MetricDataResults[0].Timestamps.map((ts) => {
+                  const parts = ts.split(/[- :+]/);
+                  return `${parts[3]}:${parts[4]}`;
+                }),
+                y: data[idx].MetricDataResults[0].Values
+              }
+            };
+          });
+
+          this.nsMetricsTail = Array(3 - (this.nsMetrics.length % 3)).fill(0);
+
+          this.loggerService.log('nsMetrics', this.nsMetrics);
+
+          this.spinnerService.show(false);
+        },
+        error: () => { this.spinnerService.show(false); }
+      });
   }
 }
