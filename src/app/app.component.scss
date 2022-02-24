@@ -1,163 +1,9 @@
 @import '_variables';
 
-$headerHorzPadding: 10px;
-
-$navMenuBg: #227093;
-$navMenuItemBg: #1c5772;
-$modulesMenuItemBg: rgb(32, 42, 51);
-
-@mixin invertedHeader {
-  background-color: $color1;
-  color: $color1Contrast;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  a {
-    color: $color1Contrast;
-    text-decoration: none;
-  }
-}
-
-.header-icons {
-  img {
-    width: 30px;
-    cursor: pointer;
-  }
-
-  span {
-    display: inline-block;
-    margin-left: 20px;
-  }
-}
-
-.top-header {
-  @include invertedHeader;
-  padding: 20px $headerHorzPadding;
-
-  .logo-link {
-    img {
-      width: 180px;
-    }
-  }
-
-  .title {
-    font-size: 22px;
-  }
-
-  .header-icons {
-    span {
-      filter: invert(1);
-    }
-  }
-}
-
-.mid-header {
-  display: flex;
-  align-items: center;
-  padding: 15px $headerHorzPadding;
-
-  .csx-logo {
-    width: 100px;
-    filter: invert(1);
-  }
-
-  .title {
-    margin-left: 30px;
-    font-weight: 500;
-    flex-grow: 1;
-  }
-
-  .header-icons {
-    span {
-      display: inline-block;
-    }
-  }
-}
-
-nav {
-  @include invertedHeader;
-  padding: 10px 30px;
-}
-
-.menu-container {
-  display: none;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 99;
-
-  &.visible {
-    display: flex;
-  }
-}
-
-.side-menu {
-  height: 100%;
-  color: #fff;
-  display: none;
-  grid-auto-columns: 100%;
-  grid-auto-rows: 1fr;
-  justify-content: center;
-  row-gap: 10px;
-
-
-  &.visible {
-    display: grid;
-  }
-
-  a {
-    padding: 0 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-
-    &:hover {
-      background-color: transparent;
-    }
-
-    &.disabled {
-      cursor: default;
-      color: dimgray;
-    }
-  }
-}
-
-.nav-menu {
-  background-color: $navMenuBg;
-
-  a {
-    background-color: $navMenuItemBg;
-
-    &.disabled {
-      &:hover {
-        background-color: $navMenuItemBg;
-      }
-    }
-  }
-}
-
-.modules-menu {
-  background-color: $navMenuBg;
-
-  a {
-    background-color: $modulesMenuItemBg;
-
-    &.disabled {
-      &:hover {
-        background-color: $modulesMenuItemBg;
-      }
-    }
-  }
-}
 
 .progress {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   position: fixed;
@@ -167,4 +13,14 @@ nav {
   bottom: 0;
   z-index: 1000;
   background: rgba(0, 0, 0, 0.2);
+
+  .progress-message {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    margin-top: 2rem;
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
 }

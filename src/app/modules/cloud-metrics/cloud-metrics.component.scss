@@ -1,3 +1,5 @@
+@import '_variables';
+
 $gapWidth: 10px;
 $marginWidth: 4px;
 $gapColor: #8388a4;
@@ -26,11 +28,57 @@ $gapColor: #8388a4;
   }
 }
 
+$metricsCtrlIconSize: 16px;
+.graph-title {
+  display: grid;
+  grid-template-columns: 1fr max-content max-content;
+  align-items: center;
+  column-gap: 0.5em;
+  width: 100%;
+
+  mat-icon {
+    width: $metricsCtrlIconSize;
+    height: $metricsCtrlIconSize;
+    font-size: $metricsCtrlIconSize;
+    cursor: pointer;
+  }
+
+  & > div {
+    padding-left: 3rem;
+  }
+}
+
+.metrics-failed {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 6rem;
+}
+
 .indicators {
+  padding-top: $menuItemHeight;
   margin-left: $marginWidth;
   border-left: $gapWidth solid $gapColor;
   background: #fff;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
+}
+
+.stats {
+  padding: calc($menuItemHeight + 0.2em) 0.5em 0em 0.5em;
+  text-align: center;
+}
+
+$iconSize: 16px;
+.icon-hidden-count {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.4em;
+  cursor: pointer;
+
+  mat-icon {
+    margin-left: 4px;
+    font-size: $iconSize;
+    width: $iconSize;
+    height: $iconSize;
+  }
 }

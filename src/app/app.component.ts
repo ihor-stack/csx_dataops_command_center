@@ -13,6 +13,8 @@ export class AppComponent extends BaseComponent implements OnInit {
   showNavMenu = false;
   showModulesMenu = false;
   showSpinner = false;
+  spinnerText: string | null = '';
+  hiddenMetricsCount = 0;
 
   constructor(
     private cdRef: ChangeDetectorRef,
@@ -34,7 +36,8 @@ export class AppComponent extends BaseComponent implements OnInit {
   ngOnInit(): void {
     this.spinnerService.showSpinner$.subscribe(
       (val) => {
-        this.showSpinner = val;
+        this.showSpinner = !!val;
+        this.spinnerText = (typeof (val) === 'string' && val !== '') ? val : null;
         this.cdRef.detectChanges();
       }
     );

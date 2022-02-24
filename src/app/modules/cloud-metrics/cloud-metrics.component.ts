@@ -1,21 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { switchMap, Subject, forkJoin } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import {
+  switchMap, forkJoin, catchError, of, BehaviorSubject,
+} from 'rxjs';
+import { distinctUntilChanged, tap } from 'rxjs/operators';
 
 import { AwsService } from '@services/aws.service';
 import { LoggerService } from '@services/logger.service';
-import { SpinnerService } from '@services/spinner.service';
+import { SpinnerService } from '@app/core/services/spinner.service';
 
-interface NsMetric {
-  name: string;
-  graphData: {
-    line: { color: '#3B426E', width: 3 },
-    type: 'scatter',
-    x: string[],
-    y: number[]
-  }
-}
+import { CloudwatchMetrics } from '@defs/aws-api';
+import { NsMetric, Namespace, HiddenMetric } from '@defs/metrics';
+import { ViewHiddenMetricsComponent } from './dialogs/view-hidden-metrics.dialog';
+
+const LSK_HIDDEN_METRICS = 'hiddenMetrrics';
 
 @UntilDestroy()
 @Component({
@@ -28,32 +27,16 @@ export class CloudMetricsComponent implements OnInit {
   readonly chartBg = '#ccceda';
   readonly chartPlotColor = '#3b426e';
   readonly chartFontColor = '#000';
-  readonly activeNamespaces = [
-    'AmazonMWAA',
-    'AmplifyHosting',
-    'ApiGateway',
-    'Billing',
-    'EBS',
-    'EC2',
-    'EFS',
-    'Kafka',
-    'Lambda'
-  ];
 
-  namespaces: string[] = [];
-  displayedNamespace$ = new Subject<string>();
-  displayedNamespace: string = '';
+  namespaces: Namespace[] = [];
+  displayedNamespace$ = new BehaviorSubject<string>('');
+  showAllNs = false;
 
   nsMetrics: NsMetric[] = [];
   private currentMetricsNames: string[] = [];
-  nsMetricsTail: number[] = [];
 
-  public graphData = {
-    line: { color: '#3B426E', width: 3 },
-    type: 'scatter',
-    x: [1, 2, 3, 4],
-    y: [10, 15, 13, 17],
-  };
+  hiddenMetrics: HiddenMetric[] = [];
+  curNsHiddenCount = 0;
 
   public graphLayout = {
     /*
@@ -73,10 +56,10 @@ export class CloudMetricsComponent implements OnInit {
     paper_bgcolor: 'transparent',
     plot_bgcolor: this.chartBg,
     margin: {
-      l: 20,
-      r: 20,
+      l: 30,
+      r: 10,
       b: 50,
-      t: 20,
+      t: 10,
       pad: 0,
     },
     xaxis: {
@@ -170,62 +153,90 @@ export class CloudMetricsComponent implements OnInit {
     },
   };
 
+  viewHiddenMetricsDialogRef: MatDialogRef<ViewHiddenMetricsComponent> | undefined;
+
+  dummy = '';
+
   constructor(
     private awsService: AwsService,
     private loggerService: LoggerService,
-    private spinnerService: SpinnerService
+    private spinnerService: SpinnerService,
+    public dialog: MatDialog,
   ) { }
 
   ngOnInit(): void {
+    this.loadHidden();
+
     this.spinnerService.show(true);
 
     this.awsService.listCloudwatchNamespaces().subscribe(
       (namespaces) => { // process namespaces
-        this.namespaces = namespaces.filter(
+        this.namespaces = namespaces.map(
           // eslint-disable-next-line arrow-body-style
-          (name) => {
-            return this.activeNamespaces.reduce(
-              (acc, item) => name.includes(item) || acc,
-              false as boolean
-            );
+          (key) => {
+            return {
+              key,
+              displayName: key.replace('AWS/', ''),
+              order: 1
+            };
           }
         );
         this.loggerService.log('filtered namespaces', this.namespaces);
 
-        this.displayedNamespace$.next(this.namespaces[1]);
+        this.displayedNamespace$.next(this.namespaces[1].key);
       }
     );
 
     this.displayedNamespace$
       .pipe(
+        tap((val) => this.loggerService.log('sel ns', val)),
         untilDestroyed(this),
         distinctUntilChanged(),
         switchMap((ns) => {
           this.loggerService.log('active NS', ns);
-
-          this.displayedNamespace = ns;
           this.spinnerService.show(true);
 
-          return this.awsService.listCloudwatchMetrics(ns);
+          return this.awsService.listCloudwatchMetrics(ns)
+            .pipe(
+              catchError((err) => {
+                this.loggerService.log('err on get metrics list', err);
+                return of([]);
+              })
+            );
         }),
         switchMap((nsMetric) => { // process namespace metrics
           this.loggerService.log('metric', nsMetric);
 
-          this.currentMetricsNames = Object.keys(nsMetric);
+          this.currentMetricsNames = Object.keys(nsMetric)
+            .filter((nsm) => !this.isHidden(nsm))
+            .sort();
+
           this.loggerService.log('metricsNames', this.currentMetricsNames);
+
+          let loaded = 0;
 
           const requests = this.currentMetricsNames.map(
             (metricName) => {
               const dims = nsMetric[metricName];
 
               return this.awsService.fetchCloudwatchMetrics(
-                this.displayedNamespace,
+                this.displayedNamespace$.getValue(),
                 metricName,
                 dims[0][1]
+              ).pipe(
+                catchError((err) => {
+                  this.loggerService.log('err on get metrics', err);
+                  return of(false);
+                }),
+                tap(() => {
+                  loaded += 1;
+                  this.spinnerService.show(`${loaded} of ${this.currentMetricsNames.length} metrics`);
+                })
               );
             }
           );
 
+          this.spinnerService.show(`${loaded} of ${this.currentMetricsNames.length} metrics`);
           return forkJoin(requests);
         })
       )
@@ -235,27 +246,113 @@ export class CloudMetricsComponent implements OnInit {
 
           // eslint-disable-next-line arrow-body-style
           this.nsMetrics = this.currentMetricsNames.map((metricName, idx): NsMetric => {
-            return {
-              name: metricName,
-              graphData: {
+            const item: NsMetric = { name: metricName };
+
+            if (data[idx] !== false) {
+              const results = (data[idx] as CloudwatchMetrics).MetricDataResults[0];
+              item.graphData = {
                 line: { color: '#3B426E', width: 3 },
                 type: 'scatter',
-                x: data[idx].MetricDataResults[0].Timestamps.map((ts) => {
+                x: results.Timestamps.map((ts) => {
                   const parts = ts.split(/[- :+]/);
                   return `${parts[3]}:${parts[4]}`;
                 }),
-                y: data[idx].MetricDataResults[0].Values
-              }
-            };
-          });
+                y: results.Values
+              };
+            }
 
-          this.nsMetricsTail = Array(3 - (this.nsMetrics.length % 3)).fill(0);
+            return item;
+          });
 
           this.loggerService.log('nsMetrics', this.nsMetrics);
 
+          this.calcHidden();
+
           this.spinnerService.show(false);
         },
-        error: () => { this.spinnerService.show(false); }
+        error: () => {
+          // show notification
+          this.spinnerService.show(false);
+        }
       });
+  }
+
+  getTailCount() {
+    const tmp = this.nsMetrics.length % 3;
+    return tmp ? Array(3 - tmp).fill(0) : [];
+  }
+
+  switchNs(nsKey: string) {
+    this.displayedNamespace$.next(nsKey);
+    this.showAllNs = false;
+
+    for (let i = 0; i < this.namespaces.length; i += 1) {
+      if (this.namespaces[i].key === nsKey) this.namespaces[i].order = 1;
+      else this.namespaces[i].order += 1;
+    }
+  }
+
+  hideMetrics(nsKey: string) {
+    this.addHidden({
+      namespace: this.displayedNamespace$.getValue(),
+      metric: nsKey
+    });
+
+    this.nsMetrics = this.nsMetrics.filter((nsm) => nsm.name !== nsKey);
+  }
+
+  loadHidden() {
+    try {
+      const strData = localStorage.getItem(LSK_HIDDEN_METRICS);
+      if (strData) {
+        this.hiddenMetrics = JSON.parse(strData);
+        this.calcHidden();
+        this.loggerService.log('hiddens', this.hiddenMetrics);
+      }
+    } catch (err) {
+      //
+    }
+  }
+
+  private saveHidden() {
+    localStorage.setItem(
+      LSK_HIDDEN_METRICS,
+      JSON.stringify(this.hiddenMetrics)
+    );
+  }
+
+  addHidden(val: HiddenMetric) {
+    this.hiddenMetrics.push(val);
+    this.calcHidden();
+    this.saveHidden();
+  }
+
+  calcHidden() {
+    const curNs = this.displayedNamespace$.getValue();
+
+    this.curNsHiddenCount = this.hiddenMetrics.reduce(
+      (acc, item) => {
+        if (item.namespace === curNs) return (acc + 1);
+        return acc;
+      },
+      0
+    );
+  }
+
+  isHidden(ns: string): boolean {
+    const curNs = this.displayedNamespace$.getValue();
+
+    return !!this.hiddenMetrics.find(
+      (hidden) => hidden.namespace === curNs && hidden.metric === ns
+    );
+  }
+
+  showHiddenMetricsDialod() {
+    this.viewHiddenMetricsDialogRef = this.dialog.open(ViewHiddenMetricsComponent);
+  }
+
+  showBigChart(nsKey: string) {
+    // console.log('show big', nsKey);
+    this.dummy = nsKey;
   }
 }

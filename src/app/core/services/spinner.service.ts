@@ -3,9 +3,9 @@ import { BehaviorSubject } from 'rxjs';
 
 @Injectable()
 export class SpinnerService {
-  showSpinner$ = new BehaviorSubject<boolean>(false);
+  showSpinner$ = new BehaviorSubject<boolean | string>(false);
 
-  show(val: boolean) {
+  show(val: boolean | string) {
     this.showSpinner$.next(val);
   }
 }

@@ -1,15 +1,4 @@
-<!--
-<header class="top-header">
-  <a class="logo-link" [routerLink]="Routes.Home | link"><img src="/assets/img/logo.png" /></a>
-  <div class="title">Title</div>
-  <div class="header-icons">
-    <span class="icon-home"><a [routerLink]="Routes.Home | link"><img src="/assets/img/home.svg" /></a></span>
-    <span class="icon-settings"><img src="/assets/img/settings.svg" (click)="showNavMenu = true"/></span>
-  </div>
-</header>
--->
-
-<header class="mid-header">
+<header class="header">
   <img class="csx-logo" src="/assets/img/csxlogo_2.png" />
   <div class="title">COMMAND CENTER</div>
   <div class="header-icons">
@@ -17,18 +6,6 @@
     <span class="icon-settings"><img src="/assets/img/settings.svg" (click)="showModulesMenu = true"/></span>
   </div>
 </header>
-
-<nav>
-  <a [routerLink]="[]">Airflow (MWAA)</a>
-  <a [routerLink]="[]">AmplifyHosting</a>
-  <a [routerLink]="[]">ApiGateway</a>
-  <a [routerLink]="[]">Billing</a>
-  <a [routerLink]="[]">EBS</a>
-  <a [routerLink]="[]">EC2</a>
-  <a [routerLink]="[]">EFS</a>
-  <a [routerLink]="[]">AWS / Kafka</a>
-  <a [routerLink]="[]">Lambda</a>
-</nav>
 
 <div class="page">
   <router-outlet></router-outlet>
@@ -57,4 +34,5 @@
 
 <div class="progress" [hidden]="!showSpinner">
   <mat-spinner></mat-spinner>
+  <div class="progress-message" *ngIf="spinnerText">{{ spinnerText }}</div>
 </div>
