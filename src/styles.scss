@@ -12,12 +12,68 @@
 @import '_variables';
 @import 'header-menu';
 
+$darkTextColor: '#fff';
+$lightTextColor: '#000';
+
+$mainPalette: (
+  900: #202a33,
+  800: #313e4a,
+  700: #40515f,
+  600: #4f6475,
+  500: #5c7286,
+  400: #748798,
+  300: #8b9caa,
+  200: #acb8c3,
+  100: #ccd4dc,
+  50: #eaeef2,
+  contrast: (
+    900: $lightTextColor,
+    800: $lightTextColor,
+    700: $lightTextColor,
+    600: $lightTextColor,
+    500: $lightTextColor,
+    400: $lightTextColor,
+    300: $lightTextColor,
+    200: $lightTextColor,
+    100: $darkTextColor,
+    50: $darkTextColor,
+  )
+);
+
+$secondaryPalette: (
+  900: #002f44,
+  800: #0c445c,
+  700: #1c5772,
+  600: #2c6a88,
+  500: #3a799a,
+  400: #578dac,
+  300: #71a2bf,
+  200: #94bdd7,
+  100: #b3daf0,
+  50: #d7f1ff,
+  constrast: (
+    900: $lightTextColor,
+    800: $lightTextColor,
+    700: $lightTextColor,
+    600: $lightTextColor,
+    500: $lightTextColor,
+    400: $lightTextColor,
+    300: $lightTextColor,
+    200: $lightTextColor,
+    100: $darkTextColor,
+    50: $darkTextColor,
+  )
+);
+
 
 // Define the palettes for your theme using the Material Design palettes available in palette.scss
 // (imported above). For each palette, you can optionally specify a default, lighter, and darker
 // hue. Available color palettes: https://material.io/design/color/
 $kedion-primary: mat.define-palette(mat.$indigo-palette);
 $kedion-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+// $kedion-primary: mat.define-palette($mainPalette);
+// $kedion-accent: mat.define-palette($secondaryPalette);
+
 
 // The warn palette is optional (defaults to red).
 $kedion-warn: mat.define-palette(mat.$red-palette);

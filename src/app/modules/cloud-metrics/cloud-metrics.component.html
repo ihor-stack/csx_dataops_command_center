@@ -1,7 +1,7 @@
 <nav>
   <div [ngClass]="{ 'menu-items': true, 'opened': showAllNs }">
-    <div *ngFor="let item of namespaces"
-      (click)="switchNs(item.key)"
+    <div *ngFor="let item of namespaces; let idx = index"
+      (click)="switchNs(item.key, $event)"
       [ngClass]="{ active: item.key === displayedNamespace$.getValue()}"
       [style.order]="item.order"
     >{{ item.displayName }}</div>
@@ -22,24 +22,24 @@
 </div>
 
 <div class="content" *ngIf="nsMetrics.length > 0">
-  <div class="cloud-metrics-graphs">
-    <!-- <plotly-plot [data]="graph.data" [layout]="graph.layout"></plotly-plot> -->
-    <div *ngFor="let item of nsMetrics">
-      <div class="graph-title">
-        <div>{{ item.name }}</div>
-        <mat-icon (click)="hideMetrics(item.name)" title="Hide metrics">visibility_off</mat-icon>
-        <mat-icon (click)="showBigChart(item.name)" title="View big chart">open_in_full</mat-icon>
+  <div class="cloud-metrics-graphs-wr">
+    <div class="cloud-metrics-graphs">
+      <div *ngFor="let item of nsMetrics">
+        <div class="graph-title">
+          <div>{{ item.name }}</div>
+          <mat-icon (click)="hideMetrics(item.name)" title="Hide metrics">visibility_off</mat-icon>
+          <mat-icon (click)="showBigChart(item.name)" title="View big chart">open_in_full</mat-icon>
+        </div>
+        <plotly-plot *ngIf="item.graphData"
+          [data]="[item.graphData]"
+          [layout]="graphLayout"
+          [config]="graphConfig"
+        ></plotly-plot>
+        <div class="metrics-failed" *ngIf="!item.graphData">Data loading failed</div>
       </div>
-      <plotly-plot *ngIf="item.graphData"
-        [data]="[item.graphData]"
-        [layout]="graphLayout"
-        [config]="graphConfig"
-      ></plotly-plot>
-      <div class="metrics-failed" *ngIf="!item.graphData">Data loading failed</div>
+
+      <div *ngFor="let item of getTailCount()"></div>
     </div>
-
-    <div *ngFor="let item of getTailCount()"></div>
-
   </div>
   <div class="indicators">
     <div>

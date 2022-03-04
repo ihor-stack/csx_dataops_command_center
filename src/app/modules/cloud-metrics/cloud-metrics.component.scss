@@ -9,12 +9,15 @@ $gapColor: #8388a4;
   border: $marginWidth solid #fff;
 }
 
-.cloud-metrics-graphs {
-  background: $gapColor;
+.cloud-metrics-graphs-wr {
   flex-grow: 1;
+}
+
+.cloud-metrics-graphs {
   display: grid;
   grid-template-rows: max-content max-content;
   grid-template-columns: 1fr 1fr 1fr;
+  background: $gapColor;
   gap: $gapWidth $gapWidth;
   place-items: stretch;
 

@@ -1,0 +1,15 @@
+<h3 mat-dialog-title>{{ data.metricName }}</h3>
+
+<mat-dialog-content #content class="content">
+  <div class="graph-wrapper">
+    <plotly-plot *ngIf="graphData"
+      [data]="[graphData]"
+      [layout]="graphLayout"
+      [config]="data.graphConfig"
+    ></plotly-plot>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close cdkFocusInitial>Close</button>
+</mat-dialog-actions>

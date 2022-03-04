@@ -1,8 +1,18 @@
-<mat-dialog-content class="mat-typography">
-  <h3>Hidden metrics</h3>
+<h3 mat-dialog-title>Hidden metrics</h3>
+
+<mat-dialog-content class="">
+  <form [formGroup]="form">
+    <ul class="hidden-metrics-list">
+      <li *ngFor="let item of data.hidden">
+        <mat-checkbox [formControlName]="item.metric">{{ item.metric }}</mat-checkbox>
+      </li>
+    </ul>
+  </form>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
-  <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Show</button>
+  <button mat-button mat-dialog-close>Close</button>
+  <button mat-button cdkFocusInitial
+    (click)="onShowHiddenMetrics()"
+  >Show selected</button>
 </mat-dialog-actions>
