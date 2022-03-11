@@ -69,6 +69,16 @@ $metricsCtrlIconSize: 16px;
 .stats {
   padding: calc($menuItemHeight + 0.2em) 0.5em 0em 0.5em;
   text-align: center;
+
+  mat-form-field {
+    width: 15rem;
+    margin-right: 2rem;
+  }
+
+  .mat-select-value {
+    max-width: 100%;
+    width: auto;
+  }
 }
 
 $iconSize: 16px;

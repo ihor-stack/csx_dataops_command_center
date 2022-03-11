@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { FormControl } from '@angular/forms';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
   switchMap, forkJoin, catchError, of, BehaviorSubject, merge, Subject,
 } from 'rxjs';
-import { distinctUntilChanged, map, tap } from 'rxjs/operators';
+import {
+  distinctUntilChanged, filter, map, tap
+} from 'rxjs/operators';
 
 import { AwsService } from '@services/aws.service';
 import { LoggerService } from '@services/logger.service';
@@ -16,6 +19,16 @@ import { ViewHiddenMetricsComponent } from './dialogs/view-hidden-metrics.dialog
 import { MetricsChartBigComponent, MetricsChartBigData } from './dialogs/metrics-chart-big.dialog';
 
 const LSK_HIDDEN_METRICS = 'hiddenMetrrics';
+
+interface AwsDimension {
+  Name: string;
+  Value: string;
+}
+
+interface NsDimension {
+  metricsNames: string[];
+  dimension: AwsDimension;
+}
 
 @UntilDestroy()
 @Component({
@@ -157,7 +170,8 @@ export class CloudMetricsComponent implements OnInit {
 
   viewHiddenMetricsDialogRef: MatDialogRef<ViewHiddenMetricsComponent> | undefined;
 
-  dummy = '';
+  nsDimensions: NsDimension[] = [];
+  nsDimensionsCtrl = new FormControl(null);
 
   constructor(
     private awsService: AwsService,
@@ -188,9 +202,10 @@ export class CloudMetricsComponent implements OnInit {
       }
     );
 
-    merge(
+    merge( // reload metrics if namespace was changed or reload initiated
       this.displayedNamespace$.pipe(
         untilDestroyed(this),
+        filter((ns) => ns.length > 0),
         distinctUntilChanged()
       ),
       this.reload$.pipe(
@@ -211,22 +226,101 @@ export class CloudMetricsComponent implements OnInit {
                 return of([]);
               })
             );
-        }),
-        switchMap((nsMetric) => { // process namespace metrics
-          this.currentMetricsNames = Object.keys(nsMetric)
-            .filter((nsm) => !this.isHidden(nsm))
-            .sort();
+        })
+      )
+      .subscribe((nsMetric) => { // process namespace metrics
+        this.loggerService.log('nsMetric', nsMetric);
 
-          let loaded = 0;
+        const metricsNames = Object.keys(nsMetric)
+          // eslint-disable-next-line arrow-body-style
+          .filter((nsm) => {
+            if (this.isHidden(nsm)) return false;
+            if (nsMetric[nsm].length === 1 && nsMetric[nsm][0].length === 0) {
+              this.loggerService.log(`${nsm} skipped: no dimensions`);
+              return false;
+            }
+            return true;
+          })
+          .sort();
 
-          const requests = this.currentMetricsNames.map(
+        this.nsDimensions = [];
+
+        metricsNames.forEach((metricName) => {
+          const dims: any[] = nsMetric[metricName];
+
+          const dimsOptions: AwsDimension[] = dims
+            .flat(Infinity)
+            .reduce( // remove duplicates
+              (acc1, item: AwsDimension) => {
+                // eslint-disable-next-line arrow-body-style
+                const tmp = acc1.find((d: AwsDimension) => {
+                  return Object.keys(d)
+                    .map(() => d.Name === item.Name && d.Value === item.Value) // TODO check it
+                    .reduce(
+                      (acc2, val) => val && acc2,
+                      true
+                    );
+                });
+
+                if (!tmp) acc1.push(item);
+
+                return acc1;
+              },
+              [] as AwsDimension[]
+            )
+            .sort((a: AwsDimension, b: AwsDimension) => {
+              let res = 0;
+              if (a.Name > b.Name) res = 1;
+              if (a.Name < b.Name) res = -1;
+
+              if (!res) {
+                if (a.Value > b.Value) res = 1;
+                if (a.Value < b.Value) res = -1;
+              }
+
+              return res;
+            });
+
+          this.loggerService.log('dims', dims);
+          this.loggerService.log('dimsOptions', dimsOptions);
+
+          dimsOptions.forEach((dimOpt) => {
+            const nsd = this.nsDimensions.find(
+              (item) => item.dimension.Name === dimOpt.Name
+                && item.dimension.Value === dimOpt.Value
+            );
+
+            if (nsd) {
+              nsd.metricsNames.push(metricName);
+            } else {
+              this.nsDimensions.push({
+                dimension: dimOpt,
+                metricsNames: [metricName]
+              });
+            }
+          });
+        });
+
+        this.loggerService.log('nsDimensions', this.nsDimensions);
+
+        this.nsDimensionsCtrl.patchValue(0);
+      });
+
+    let loaded = 0;
+    this.nsDimensionsCtrl.valueChanges
+      .pipe(
+        untilDestroyed(this),
+        switchMap((dimIdx: number) => {
+          loaded = 0;
+          this.currentMetricsNames = this.nsDimensions[dimIdx].metricsNames;
+
+          const requests = this.nsDimensions[dimIdx].metricsNames.map(
+            // eslint-disable-next-line arrow-body-style
             (metricName) => {
-              const dims = nsMetric[metricName];
-
               return this.awsService.fetchCloudwatchMetrics(
                 this.displayedNamespace$.getValue(),
                 metricName,
-                dims[0][1]
+                [this.nsDimensions[0].dimension]
               ).pipe(
                 catchError((err) => {
                   this.loggerService.log('err on get metrics', err);
@@ -234,7 +328,9 @@ export class CloudMetricsComponent implements OnInit {
                 }),
                 tap(() => {
                   loaded += 1;
-                  this.spinnerService.show(`${loaded} of ${this.currentMetricsNames.length} metrics`);
+                  this.spinnerService.show(
+                    `${loaded} of ${this.currentMetricsNames.length} metrics`
+                  );
                 })
               );
             }
@@ -251,6 +347,7 @@ export class CloudMetricsComponent implements OnInit {
             const item: NsMetric = { name: metricName };
 
             if (data[idx] !== false) {
+              this.loggerService.log(`idx=${idx}`, data[idx]);
               const results = (data[idx] as CloudwatchMetrics).MetricDataResults[0];
               item.graphData = {
                 line: { color: '#3B426E', width: 3 },
