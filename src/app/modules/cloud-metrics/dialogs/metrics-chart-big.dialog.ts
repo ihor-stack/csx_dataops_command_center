@@ -1,5 +1,6 @@
 import {
-  Component, Inject, ViewChild, AfterViewInit
+  Component, Inject, ViewChild, AfterViewInit,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NsMetric } from '@defs/metrics';
@@ -25,6 +26,7 @@ export class MetricsChartBigComponent implements AfterViewInit {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: MetricsChartBigData,
+    private cdRef: ChangeDetectorRef
   ) { }
 
   ngAfterViewInit(): void {
@@ -37,5 +39,6 @@ export class MetricsChartBigComponent implements AfterViewInit {
     this.graphLayout.margin.l = 40;
 
     this.graphData = this.data.metric.graphData;
+    this.cdRef.detectChanges();
   }
 }

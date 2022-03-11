@@ -13,16 +13,17 @@
   </div>
 </nav>
 
-<div class="stats">
-  <mat-form-field *ngIf="nsDimensions.length > 1">
+<div class="stats" *ngIf="activeDimensionIdx >=0 && activeDimensionIdx < nsDimensions.length">
+  <mat-form-field class="select-fitcontent" *ngIf="nsDimensions.length > 1">
     <mat-select [formControl]="nsDimensionsCtrl">
       <mat-option *ngFor="let item of nsDimensions; let idx = index;" [value]="idx">
         {{ item.dimension.Name }}: {{ item.dimension.Value }}</mat-option>
     </mat-select>
   </mat-form-field>
-  <span>{{ nsMetrics.length }} metrics</span>
-  <span class="icon-hidden-count" *ngIf="curNsHiddenCount > 0">
-    and {{ curNsHiddenCount }} hidden
+
+  <span>{{ nsDimensions[activeDimensionIdx].metricsNames.length }} metrics</span>
+  <span class="icon-hidden-count" *ngIf="nsDimensions[activeDimensionIdx].hiddenMetricsNames.length > 0">
+    and {{ nsDimensions[activeDimensionIdx].hiddenMetricsNames.length }} hidden
     <mat-icon (click)="showHiddenMetricsDialod()" title="Hidden metrics count">visibility_off</mat-icon>
   </span>
 </div>

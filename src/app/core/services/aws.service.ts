@@ -117,7 +117,6 @@ export class AwsService {
     if (startTime) queryParams.startTime = startTime;
     if (endTime) queryParams.startTime = startTime;
 
-    console.log(`fetchCloudwatchMetrics: NS=${namespace}, metric=${metricName}, dims=`, dimensions);
     return this.callClientMethod<CloudwatchMetrics>(
       'fetchCloudwatchMetricsPost',
       {},

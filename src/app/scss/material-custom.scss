@@ -1,0 +1,22 @@
+.select-fitcontent {
+  mat-select {
+    width: fit-content !important;
+    min-width: 100%;
+  }
+
+  .mat-form-field-infix {
+    min-width: 75px !important;
+    width: fit-content !important;
+  }
+
+  mat-select .mat-select-value {
+    width: fit-content;
+    min-width: 2ch;
+    display: inline-block;
+    max-width: none;
+  }
+  mat-select .mat-select-placeholder {
+    width: fit-content;
+    min-width: 10ch;
+  }
+}

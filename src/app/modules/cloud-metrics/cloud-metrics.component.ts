@@ -27,6 +27,7 @@ interface AwsDimension {
 
 interface NsDimension {
   metricsNames: string[];
+  hiddenMetricsNames: string[];
   dimension: AwsDimension;
 }
 
@@ -47,11 +48,13 @@ export class CloudMetricsComponent implements OnInit {
   reload$ = new Subject<boolean>();
   showAllNs = false;
 
+  // list of all metrics in namespace
   nsMetrics: NsMetric[] = [];
-  private currentMetricsNames: string[] = [];
+  // private currentMetricsNames: string[] = [];
 
+  // list of all hidden metrics
   hiddenMetrics: HiddenMetric[] = [];
-  curNsHiddenCount = 0;
+  // curNsHiddenCount = 0;
 
   public graphLayout = {
     /*
@@ -71,7 +74,7 @@ export class CloudMetricsComponent implements OnInit {
     paper_bgcolor: 'transparent',
     plot_bgcolor: this.chartBg,
     margin: {
-      l: 30,
+      l: 40,
       r: 10,
       b: 50,
       t: 10,
@@ -172,6 +175,7 @@ export class CloudMetricsComponent implements OnInit {
 
   nsDimensions: NsDimension[] = [];
   nsDimensionsCtrl = new FormControl(null);
+  activeDimensionIdx: number = -1;
 
   constructor(
     private awsService: AwsService,
@@ -206,7 +210,10 @@ export class CloudMetricsComponent implements OnInit {
       this.displayedNamespace$.pipe(
         untilDestroyed(this),
         filter((ns) => ns.length > 0),
-        distinctUntilChanged()
+        distinctUntilChanged(),
+        tap(() => {
+          this.activeDimensionIdx = -1;
+        })
       ),
       this.reload$.pipe(
         map(() => this.displayedNamespace$.getValue())
@@ -215,8 +222,6 @@ export class CloudMetricsComponent implements OnInit {
       .pipe(
         switchMap((ns) => {
           this.spinnerService.show(true);
-
-          this.curNsHiddenCount = 0;
           this.nsMetrics = [];
 
           return this.awsService.listCloudwatchMetrics(ns)
@@ -229,12 +234,9 @@ export class CloudMetricsComponent implements OnInit {
         })
       )
       .subscribe((nsMetric) => { // process namespace metrics
-        this.loggerService.log('nsMetric', nsMetric);
-
         const metricsNames = Object.keys(nsMetric)
           // eslint-disable-next-line arrow-body-style
           .filter((nsm) => {
-            if (this.isHidden(nsm)) return false;
             if (nsMetric[nsm].length === 1 && nsMetric[nsm][0].length === 0) {
               this.loggerService.log(`${nsm} skipped: no dimensions`);
               return false;
@@ -281,9 +283,6 @@ export class CloudMetricsComponent implements OnInit {
               return res;
             });
 
-          this.loggerService.log('dims', dims);
-          this.loggerService.log('dimsOptions', dimsOptions);
-
           dimsOptions.forEach((dimOpt) => {
             const nsd = this.nsDimensions.find(
               (item) => item.dimension.Name === dimOpt.Name
@@ -291,19 +290,25 @@ export class CloudMetricsComponent implements OnInit {
             );
 
             if (nsd) {
-              nsd.metricsNames.push(metricName);
+              if (this.isHidden(metricName)) nsd.hiddenMetricsNames.push(metricName);
+              else nsd.metricsNames.push(metricName);
             } else {
+              const isHidden = this.isHidden(metricName);
+
               this.nsDimensions.push({
                 dimension: dimOpt,
-                metricsNames: [metricName]
+                metricsNames: !isHidden ? [metricName] : [],
+                hiddenMetricsNames: isHidden ? [metricName] : []
               });
             }
           });
         });
 
-        this.loggerService.log('nsDimensions', this.nsDimensions);
+        if (this.activeDimensionIdx < 0 || this.activeDimensionIdx >= this.nsDimensions.length) {
+          this.activeDimensionIdx = 0;
+        }
 
-        this.nsDimensionsCtrl.patchValue(0);
+        this.nsDimensionsCtrl.patchValue(this.activeDimensionIdx);
       });
 
     let loaded = 0;
@@ -311,10 +316,11 @@ export class CloudMetricsComponent implements OnInit {
       .pipe(
         untilDestroyed(this),
         switchMap((dimIdx: number) => {
+          this.activeDimensionIdx = dimIdx;
           loaded = 0;
-          this.currentMetricsNames = this.nsDimensions[dimIdx].metricsNames;
+          // this.currentMetricsNames = this.nsDimensions[this.activeDimensionIdx].metricsNames;
 
-          const requests = this.nsDimensions[dimIdx].metricsNames.map(
+          const requests = this.nsDimensions[this.activeDimensionIdx].metricsNames.map(
             // eslint-disable-next-line arrow-body-style
             (metricName) => {
               return this.awsService.fetchCloudwatchMetrics(
@@ -329,41 +335,42 @@ export class CloudMetricsComponent implements OnInit {
                 tap(() => {
                   loaded += 1;
                   this.spinnerService.show(
-                    `${loaded} of ${this.currentMetricsNames.length} metrics`
+                    `${loaded} of ${this.nsDimensions[this.activeDimensionIdx].metricsNames.length} metrics`
                   );
                 })
               );
             }
           );
 
-          this.spinnerService.show(`${loaded} of ${this.currentMetricsNames.length} metrics`);
+          this.spinnerService.show(
+            `${loaded} of ${this.nsDimensions[this.activeDimensionIdx].metricsNames.length} metrics`
+          );
           return forkJoin(requests);
         })
       )
       .subscribe({
         next: (data) => {
           // eslint-disable-next-line arrow-body-style
-          this.nsMetrics = this.currentMetricsNames.map((metricName, idx): NsMetric => {
-            const item: NsMetric = { name: metricName };
+          this.nsMetrics = this.nsDimensions[this.activeDimensionIdx].metricsNames.map(
+            (metricName, idx): NsMetric => {
+              const item: NsMetric = { name: metricName };
 
-            if (data[idx] !== false) {
-              this.loggerService.log(`idx=${idx}`, data[idx]);
-              const results = (data[idx] as CloudwatchMetrics).MetricDataResults[0];
-              item.graphData = {
-                line: { color: '#3B426E', width: 3 },
-                type: 'scatter',
-                x: results.Timestamps.map((ts) => {
-                  const parts = ts.split(/[- :+]/);
-                  return `${parts[3]}:${parts[4]}`;
-                }),
-                y: results.Values
-              };
+              if (data[idx] !== false) {
+                const results = (data[idx] as CloudwatchMetrics).MetricDataResults[0];
+                item.graphData = {
+                  line: { color: '#3B426E', width: 3 },
+                  type: 'scatter',
+                  x: results.Timestamps.map((ts) => {
+                    const parts = ts.split(/[- :+]/);
+                    return `${parts[3]}:${parts[4]}`;
+                  }),
+                  y: results.Values
+                };
+              }
+
+              return item;
             }
-
-            return item;
-          });
-
-          this.calcHidden();
+          );
 
           this.spinnerService.show(false);
         },
@@ -392,13 +399,14 @@ export class CloudMetricsComponent implements OnInit {
     }
   }
 
-  hideMetrics(nsKey: string) {
-    this.addHidden({
+  hideMetrics(metric: string) {
+    this.hiddenMetrics.push({
       namespace: this.displayedNamespace$.getValue(),
-      metric: nsKey
+      metric
     });
+    this.saveHidden();
 
-    this.nsMetrics = this.nsMetrics.filter((nsm) => nsm.name !== nsKey);
+    this.reload$.next(true);
   }
 
   loadHidden() {
@@ -406,7 +414,6 @@ export class CloudMetricsComponent implements OnInit {
       const strData = localStorage.getItem(LSK_HIDDEN_METRICS);
       if (strData) {
         this.hiddenMetrics = JSON.parse(strData);
-        this.calcHidden();
       }
     } catch (err) {
       //
@@ -420,24 +427,6 @@ export class CloudMetricsComponent implements OnInit {
     );
   }
 
-  private addHidden(val: HiddenMetric) {
-    this.hiddenMetrics.push(val);
-    this.calcHidden();
-    this.saveHidden();
-  }
-
-  calcHidden() {
-    const curNs = this.displayedNamespace$.getValue();
-
-    this.curNsHiddenCount = this.hiddenMetrics.reduce(
-      (acc, item) => {
-        if (item.namespace === curNs) return (acc + 1);
-        return acc;
-      },
-      0
-    );
-  }
-
   isHidden(ns: string): boolean {
     const curNs = this.displayedNamespace$.getValue();
 
@@ -447,17 +436,23 @@ export class CloudMetricsComponent implements OnInit {
   }
 
   showHiddenMetricsDialod() {
+    const hidden = this.hiddenMetrics.filter(
+      (hm) => this.nsDimensions[this.activeDimensionIdx].hiddenMetricsNames.includes(hm.metric)
+    );
+
     this.viewHiddenMetricsDialogRef = this.dialog
       .open(
         ViewHiddenMetricsComponent,
-        { data: { hidden: this.hiddenMetrics } }
+        { data: { hidden } }
       );
 
     this.viewHiddenMetricsDialogRef.afterClosed().subscribe((data) => {
+      if (data === '') return;
+      this.loggerService.log('data from dialog', data);
+
       this.hiddenMetrics = [...this.hiddenMetrics].filter(
         (item) => !data.showMetrics.includes(item.metric)
       );
-
       this.saveHidden();
 
       this.reload$.next(true);
