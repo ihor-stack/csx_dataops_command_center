@@ -5,7 +5,7 @@ import { RoutePaths } from '@defs/route-paths';
   name: 'link'
 })
 export class LinkPipe implements PipeTransform {
-  // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line class-methods-use-this
   transform(route: RoutePaths, ...params: any): any[] {
     return [`/${route}`, ...params];
   }

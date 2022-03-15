@@ -33,7 +33,7 @@
     <div class="cloud-metrics-graphs">
       <div *ngFor="let item of nsMetrics">
         <div class="graph-title">
-          <div>{{ item.name }}</div>
+          <div>{{ item.name | splitWords }}</div>
           <mat-icon (click)="hideMetrics(item.name)" title="Hide metrics">visibility_off</mat-icon>
           <mat-icon (click)="showBigChart(item.name)" title="View big chart">open_in_full</mat-icon>
         </div>
