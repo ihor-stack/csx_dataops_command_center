@@ -1,9 +1,5 @@
 @import '_variables';
 
-$gapWidth: 10px;
-$marginWidth: 4px;
-$gapColor: #8388a4;
-
 .content {
   display: flex;
   border: $marginWidth solid #fff;
@@ -67,7 +63,7 @@ $metricsCtrlIconSize: 16px;
 }
 
 .stats {
-  padding: calc($menuItemHeight + 0.2em) 0.5em 0em 0.5em;
+  padding: 1rem 0.5rem 0em 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;

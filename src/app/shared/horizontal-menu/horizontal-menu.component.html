@@ -1,0 +1,18 @@
+<nav>
+  <div class="nav-wrapper">
+    <div [ngClass]="{ 'menu-items': true, 'opened': showAllItems }">
+      <div *ngFor="let item of items; let idx = index"
+        (click)="switchItem(item.value, $event)"
+        [ngClass]="{ active: item.value === activeItem}"
+        [style.order]="item.order"
+        >
+        {{ item.name }}
+      </div>
+    </div>
+
+    <div class="menu-expand" (click)="showAllItems = !showAllItems">
+      <mat-icon [hidden]="showAllItems">arrow_drop_down</mat-icon>
+      <mat-icon [hidden]="!showAllItems">arrow_drop_up</mat-icon>
+    </div>
+  </div>
+</nav>

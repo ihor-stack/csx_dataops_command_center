@@ -1,4 +1,5 @@
 export enum RoutePaths {
   Home = '',
-  CloudMetrics = 'cloud-metrics'
+  CloudMetrics = 'cloud-metrics',
+  DataScience = 'data-science',
 }

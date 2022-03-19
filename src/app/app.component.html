@@ -24,8 +24,8 @@
   </div>
 
   <div [ngClass]="{'side-menu': true, 'modules-menu': true, visible: showModulesMenu}">
-    <a [routerLink]="">Cloud Metrics Dashboard</a>
-    <a [routerLink]="">Data Science Dashboard</a>
+    <a [routerLink]="routePaths.CloudMetrics">Cloud Metrics Dashboard</a>
+    <a [routerLink]="routePaths.DataScience">Data Science Dashboard</a>
     <a [routerLink]="" class="disabled">ADA Architecture</a>
     <a [routerLink]="" class="disabled">ADA Orchestration</a>
     <a [routerLink]="">User Configuration</a>

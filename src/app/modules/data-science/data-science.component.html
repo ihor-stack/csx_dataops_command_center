@@ -1,28 +1,22 @@
 <horizontal-menu
-  [items]="namespaces"
-  [activeItem]="displayedNamespace$.value"
-  (selectedItem)="onSelectHorMenuItem($event)"
+  [items]="horMenuItems"
+  [activeItem]="displayedItem$.value"
+  (selectedItem)="onSelectHorMenuItem"
 ></horizontal-menu>
 
-<div class="stats" *ngIf="activeDimensionIdx >=0 && activeDimensionIdx < nsDimensions.length">
-  <mat-form-field class="select-fitcontent" *ngIf="nsDimensions.length > 1">
-    <mat-select [formControl]="nsDimensionsCtrl">
-      <mat-option *ngFor="let item of nsDimensions; let idx = index;" [value]="idx">
-        {{ item.dimension.Name }}: {{ item.dimension.Value }}</mat-option>
-    </mat-select>
-  </mat-form-field>
+<div class="content" *ngIf="sideMenuItems.length > 0">
+  <ul class="left-menu">
+    <li *ngFor="let sub of sideMenuItems"
+      (click)="onSelectSubItem(sub.value)"
+      >
+      {{ sub.name }}
+    </li>
+  </ul>
 
-  <span>{{ nsDimensions[activeDimensionIdx].metricsNames.length }} metrics</span>
-  <span class="icon-hidden-count" *ngIf="nsDimensions[activeDimensionIdx].hiddenMetricsNames.length > 0">
-    and {{ nsDimensions[activeDimensionIdx].hiddenMetricsNames.length }} hidden
-    <mat-icon (click)="showHiddenMetricsDialod()" title="Hidden metrics count">visibility_off</mat-icon>
-  </span>
-</div>
-
-<div class="content" *ngIf="nsMetrics.length > 0">
-  <div class="cloud-metrics-graphs-wr">
-    <div class="cloud-metrics-graphs">
-      <div *ngFor="let item of nsMetrics">
+  <div class="data-science-graphs-wr">
+    <div class="data-science-graphs">
+      <!---
+      <div *ngFor="let item of items">
         <div class="graph-title">
           <div>{{ item.name | splitWords }}</div>
           <mat-icon (click)="hideMetrics(item.name)" title="Hide metrics">visibility_off</mat-icon>
@@ -37,8 +31,10 @@
       </div>
 
       <div *ngFor="let item of getTailCount()"></div>
+      -->
     </div>
   </div>
+
   <div class="indicators">
     <div>
       <plotly-plot [data]="indicator1" [layout]="indicatorsLayout" [config]="{ displayModeBar: false }"></plotly-plot>

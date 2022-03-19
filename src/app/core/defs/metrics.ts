@@ -8,9 +8,8 @@ export interface NsMetric {
   }
 }
 
-export interface Namespace {
+export interface NamespaceConfig {
   key: string;
-  displayName: string;
   order: number;
 }
 

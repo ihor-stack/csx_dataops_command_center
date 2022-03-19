@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { PlotlyModule } from 'angular-plotly.js';
 import * as PlotlyJS from 'plotly.js-dist-min';
 
-import { MaterialCommonModule } from '@modules/mat-common.module';
 import { SharedModule } from '@modules/shared.module';
 
 import { CloudMetricsRoutingModule } from './cloud-metrics-routing.module';
@@ -23,7 +22,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
     CommonModule,
     CloudMetricsRoutingModule,
     PlotlyModule,
-    MaterialCommonModule,
     SharedModule,
   ],
 })

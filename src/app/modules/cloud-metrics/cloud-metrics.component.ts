@@ -11,14 +11,16 @@ import {
 
 import { AwsService } from '@services/aws.service';
 import { LoggerService } from '@services/logger.service';
+import { SettingsStorageService } from '@services/settings-storage.service';
 import { SpinnerService } from '@app/core/services/spinner.service';
 
+import { HorizontalMenuEvent, HorizontalMenuItem } from '@shared/horizontal-menu/horizontal-menu.component';
 import { CloudwatchMetrics } from '@defs/aws-api';
-import { NsMetric, Namespace, HiddenMetric } from '@defs/metrics';
+import {
+  HiddenMetric, NamespaceConfig, NsMetric
+} from '@defs/metrics';
 import { ViewHiddenMetricsComponent } from './dialogs/view-hidden-metrics.dialog';
 import { MetricsChartBigComponent, MetricsChartBigData } from './dialogs/metrics-chart-big.dialog';
-
-const LSK_HIDDEN_METRICS = 'hiddenMetrrics';
 
 interface AwsDimension {
   Name: string;
@@ -43,10 +45,9 @@ export class CloudMetricsComponent implements OnInit {
   readonly chartPlotColor = '#3b426e';
   readonly chartFontColor = '#000';
 
-  namespaces: Namespace[] = [];
+  namespaces: HorizontalMenuItem[] = [];
   displayedNamespace$ = new BehaviorSubject<string>('');
   reload$ = new Subject<boolean>();
-  showAllNs = false;
 
   // list of all metrics in namespace
   nsMetrics: NsMetric[] = [];
@@ -180,29 +181,34 @@ export class CloudMetricsComponent implements OnInit {
   constructor(
     private awsService: AwsService,
     private loggerService: LoggerService,
+    private settingsStorageService: SettingsStorageService,
     private spinnerService: SpinnerService,
     public dialog: MatDialog,
   ) { }
 
   ngOnInit(): void {
     this.loadHidden();
+    const metricsMenuConfigs = this.settingsStorageService.getNamespaceMenuConfig();
+    let activeNamespace = this.settingsStorageService.getActiveNamespace();
 
     this.spinnerService.show(true);
 
     this.awsService.listCloudwatchNamespaces().subscribe(
       (namespaces) => { // process namespaces
         this.namespaces = namespaces.map(
-          // eslint-disable-next-line arrow-body-style
           (key) => {
+            const conf = metricsMenuConfigs.find((mmc) => mmc.key === key);
+
             return {
-              key,
-              displayName: key.replace('AWS/', ''),
-              order: 1
+              value: key,
+              name: key.replace('AWS/', ''),
+              order: conf ? conf.order : 1
             };
           }
         );
 
-        this.displayedNamespace$.next(this.namespaces[1].key);
+        if (!activeNamespace) activeNamespace = this.namespaces[0].value;
+        this.displayedNamespace$.next(activeNamespace);
       }
     );
 
@@ -386,15 +392,25 @@ export class CloudMetricsComponent implements OnInit {
     return tmp ? Array(3 - tmp).fill(0) : [];
   }
 
-  switchNs(nsKey: string, event: MouseEvent) {
-    this.displayedNamespace$.next(nsKey);
-    this.showAllNs = false;
+  onSelectHorMenuItem(data: HorizontalMenuEvent) {
+    this.displayedNamespace$.next(data.value);
+    this.settingsStorageService.setActiveNamespace(data.value);
 
-    if (event.target && (event.target as HTMLElement).offsetTop > 0) {
+    if (data.event.target && (data.event.target as HTMLElement).offsetTop > 0) {
       // if not first line, change order and put clicked item on first place
       for (let i = 0; i < this.namespaces.length; i += 1) {
-        if (this.namespaces[i].key === nsKey) this.namespaces[i].order = 1;
+        if (this.namespaces[i].value === data.value) this.namespaces[i].order = 1;
         else this.namespaces[i].order += 1;
+
+        // eslint-disable-next-line arrow-body-style
+        const nsConfigs = this.namespaces.map((ns): NamespaceConfig => {
+          return {
+            key: ns.value,
+            order: ns.order
+          };
+        });
+
+        this.settingsStorageService.saveNamespaceMenuConfig(nsConfigs);
       }
     }
   }
@@ -410,21 +426,11 @@ export class CloudMetricsComponent implements OnInit {
   }
 
   loadHidden() {
-    try {
-      const strData = localStorage.getItem(LSK_HIDDEN_METRICS);
-      if (strData) {
-        this.hiddenMetrics = JSON.parse(strData);
-      }
-    } catch (err) {
-      //
-    }
+    this.hiddenMetrics = this.settingsStorageService.getHiddenMetrics();
   }
 
   private saveHidden() {
-    localStorage.setItem(
-      LSK_HIDDEN_METRICS,
-      JSON.stringify(this.hiddenMetrics)
-    );
+    this.settingsStorageService.saveHiddenMetrics(this.hiddenMetrics);
   }
 
   isHidden(ns: string): boolean {

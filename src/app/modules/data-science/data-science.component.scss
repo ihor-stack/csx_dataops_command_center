@@ -1,0 +1,45 @@
+@import '_variables';
+
+.content {
+  padding: 1rem 0 0 0;
+  display: flex;
+  border: $marginWidth solid #fff;
+}
+
+.left-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    margin: 0;
+    padding: 0.3rem 1rem;
+    cursor: pointer;
+
+    & .active {
+      background-color: $navMenuItemBg;
+    }
+  }
+}
+
+.data-science-graphs-wr {
+  flex-grow: 1;
+}
+
+.data-science-graphs {
+  display: grid;
+  grid-template-rows: max-content max-content;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: $gapColor;
+  gap: $gapWidth $gapWidth;
+  place-items: stretch;
+
+  & > div {
+    background: #fff;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+  }
+}

@@ -10,6 +10,12 @@ const routes: Routes = [
     )
   },
   {
+    path: RoutePaths.DataScience,
+    loadChildren: () => import('@modules/data-science/data-science.module').then(
+      (m) => m.DataScienceModule
+    )
+  },
+  {
     path: '**',
     redirectTo: RoutePaths.CloudMetrics,
     pathMatch: 'full'
