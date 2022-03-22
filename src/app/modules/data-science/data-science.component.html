@@ -14,24 +14,26 @@
   </ul>
 
   <div class="graphs-wr">
-    <div class="primary-graph">
+    <div #primaryLineChart [id]="primaryLinechartId" class="primary-graph">
       <plotly-plot *ngIf="mockData.primary"
         [data]="[mockData.primary]"
-        [layout]="lineChartLayout"
+        [layout]="primaryLineChartLayout"
         [config]="lineChartConfig"
       ></plotly-plot>
     </div>
 
-    <div class="secondary-graphs" *ngIf="mockData.secondary">
-      <div *ngFor="let item of mockData.secondary">
-        secondary
-        <!--
+    <div [id]="secondaryLinechartsId" class="secondary-graphs" *ngIf="mockData.secondary">
+      <div
+        #secondaryChart
+        [id]="secondaryLinechartIdPrefix + idx"
+        *ngFor="let item of mockData.secondary; let idx = index"
+        >
         <plotly-plot *ngIf="item.graphData"
           [data]="[item.graphData]"
-          [layout]="lineChartLayout"
+          [layout]="secondaryLineChartLayout"
           [config]="lineChartConfig"
         ></plotly-plot>
-        -->
+
         <!-- <div class="metrics-failed" *ngIf="!item.graphData">Data loading failed</div> -->
       </div>
 

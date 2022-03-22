@@ -1,8 +1,10 @@
 /* eslint-disable no-console */
 import { Injectable } from '@angular/core';
 import * as AwsClientFactory from '@src/aws-js-sdk/aws-js-sdk';
-import { Observable, throwError, from } from 'rxjs';
-import { map } from 'rxjs/operators';
+import {
+  Observable, throwError, from, of
+} from 'rxjs';
+import { delay, map } from 'rxjs/operators';
 import { LoggerService } from '@services/logger.service';
 // import { environment } from '@env';
 import { CustomError } from '@core/custom-error';
@@ -157,4 +159,45 @@ export class AwsService {
   userConfigIdPost
   userConfigIdDelete
   */
+
+  // eslint-disable-next-line class-methods-use-this
+  getDataScienceMockData(): Observable<any> {
+    return of({
+      primary: {
+        line: { color: '#3B426E', width: 3 },
+        type: 'scatter',
+        x: [0, 1, 2, 3],
+        y: [2, 3, 4, 5]
+      },
+      secondary: [
+        {
+          graphData: {
+            line: { color: '#3B426E', width: 3 },
+            type: 'scatter',
+            x: [0, 1, 2, 3],
+            y: [2, 3, 4, 5]
+          }
+        },
+        {
+          graphData: {
+            line: { color: '#3B426E', width: 3 },
+            type: 'scatter',
+            x: [0, 1, 2, 3],
+            y: [2, 3, 4, 5]
+          }
+        },
+        {
+          graphData: {
+            line: { color: '#3B426E', width: 3 },
+            type: 'scatter',
+            x: [0, 1, 2, 3],
+            y: [2, 3, 4, 5]
+          }
+        },
+      ]
+    })
+      .pipe(
+        delay(200)
+      );
+  }
 }

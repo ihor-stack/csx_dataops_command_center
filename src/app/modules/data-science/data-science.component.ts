@@ -1,5 +1,8 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { UntilDestroy, /* untilDestroyed */ } from '@ngneat/until-destroy';
+import {
+  AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy,
+  QueryList, ViewChild, ViewChildren
+} from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
   BehaviorSubject, Subject,
   // switchMap, forkJoin, catchError, of, merge,
@@ -9,6 +12,7 @@ import {
   distinctUntilChanged, filter, map, tap
 } from 'rxjs/operators';
 */
+
 import {
   defGaugeChartConfig, defGaugeChartLayout, defLineChartConfig, defLineChartLayout
 } from '@defs/chart-configs';
@@ -29,7 +33,11 @@ import { HorizontalMenuEvent, HorizontalMenuItem } from '@shared/horizontal-menu
   templateUrl: './data-science.component.html',
   styleUrls: ['./data-science.component.scss']
 })
-export class DataScienceComponent implements OnInit, AfterViewInit {
+export class DataScienceComponent implements AfterViewInit, OnDestroy {
+  readonly primaryLinechartId = 'primaryLineChart';
+  readonly secondaryLinechartIdPrefix = 'secondaryLinechart_';
+  readonly secondaryLinechartsId = 'secondaryLinecharts';
+
   horMenuItems: HorizontalMenuItem[] = [
     {
       name: 'item1',
@@ -60,71 +68,80 @@ export class DataScienceComponent implements OnInit, AfterViewInit {
   reload$ = new Subject<boolean>();
   dummy = '';
 
-  lineChartLayout: SimpleObject;
+  primaryLineChartLayout: SimpleObject;
+  secondaryLineChartLayout: SimpleObject;
   lineChartConfig: SimpleObject;
   gaugeLayout: SimpleObject;
   gaugeConfig: SimpleObject[];
+
+  private resizeObserver: ResizeObserver;
+
+  @ViewChild('primaryLineChart') primaryLineChart: ElementRef | undefined;
+  @ViewChildren('secondaryChart') secondaryLineCharts: QueryList<ElementRef> | undefined;
 
   constructor(
     private awsService: AwsService,
     private loggerService: LoggerService,
     private settingsStorageService: SettingsStorageService,
     private spinnerService: SpinnerService,
+    private cdRef: ChangeDetectorRef
   ) {
-    this.lineChartLayout = Clone.deepCopy(defLineChartLayout);
-    // console.log('lineChartLayout', this.lineChartLayout);
+    this.primaryLineChartLayout = Clone.deepCopy(defLineChartLayout);
+    this.secondaryLineChartLayout = Clone.deepCopy(defLineChartLayout);
 
     this.lineChartConfig = Clone.deepCopy(defLineChartConfig);
     // console.log('lineChartConfig', this.lineChartConfig);
 
     this.gaugeLayout = Clone.deepCopy(defGaugeChartLayout);
     this.gaugeConfig = Clone.deepCopy(defGaugeChartConfig);
-  }
+    this.resizeObserver = new ResizeObserver((entries) => {
+      let secondaryW = 0;
+      let secondaryH = 0;
 
-  ngOnInit(): void {
-    this.dummy = '1';
-    // load data
+      entries.forEach((entry) => {
+        if (entry.target.id === this.primaryLinechartId) {
+          this.primaryLineChartLayout['width'] = entry.contentRect.width;
+          this.primaryLineChartLayout['height'] = entry.contentRect.height;
+        }
+
+        if (entry.target.id.indexOf(this.secondaryLinechartIdPrefix) === 0) {
+          secondaryW = entry.contentRect.width;
+          secondaryH = entry.contentRect.height;
+        }
+      });
+
+      if (secondaryW > 0 && secondaryH > 0) {
+        this.secondaryLineChartLayout['width'] = secondaryW;
+        this.secondaryLineChartLayout['height'] = secondaryH;
+      }
+
+      this.cdRef.detectChanges();
+    });
   }
 
   ngAfterViewInit(): void {
-    setTimeout(() => {
-      this.mockData = {
-        primary: {
-          line: { color: '#3B426E', width: 3 },
-          type: 'scatter',
-          x: [0, 1, 2, 3],
-          y: [2, 3, 4, 5]
-        },
-        secondary: [
-          {
-            graphData: {
-              line: { color: '#3B426E', width: 3 },
-              type: 'scatter',
-              x: [0, 1, 2, 3],
-              y: [2, 3, 4, 5]
-            }
-          },
-          /*
-          {
-            graphData: {
-              line: { color: '#3B426E', width: 3 },
-              type: 'scatter',
-              x: [0, 1, 2, 3],
-              y: [2, 3, 4, 5]
-            }
-          },
-          {
-            graphData: {
-              line: { color: '#3B426E', width: 3 },
-              type: 'scatter',
-              x: [0, 1, 2, 3],
-              y: [2, 3, 4, 5]
-            }
-          },
-          */
-        ]
-      };
-    }, 50);
+    // load data
+    this.awsService.getDataScienceMockData().subscribe((data) => {
+      this.mockData = data;
+    });
+
+    if (this.primaryLineChart) {
+      this.resizeObserver.observe(this.primaryLineChart.nativeElement);
+    }
+
+    if (this.secondaryLineCharts) {
+      this.secondaryLineCharts.changes
+        .pipe(untilDestroyed(this))
+        .subscribe((data: QueryList<ElementRef>) => {
+          data.forEach((ref: ElementRef) => {
+            this.resizeObserver.observe(ref.nativeElement);
+          });
+        });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver.disconnect();
   }
 
   onSelectHorMenuItem(data: HorizontalMenuEvent) {
