@@ -4,12 +4,13 @@ import {
 } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NsMetric } from '@defs/metrics';
+import { Clone } from '@utils/clone-deep';
 
 export interface MetricsChartBigData {
   metricName: string;
   metric: NsMetric;
-  graphLayout: any;
-  graphConfig: any;
+  lineChartLayout: any;
+  lineChartConfig: any;
 }
 
 @Component({
@@ -19,7 +20,7 @@ export interface MetricsChartBigData {
 })
 // tslint:disable-next-line: component-class-suffix
 export class MetricsChartBigComponent implements AfterViewInit {
-  graphLayout: any = {};
+  lineChartLayout: any = {};
   graphData: any;
 
   @ViewChild('content') content: HTMLElement | undefined;
@@ -30,13 +31,10 @@ export class MetricsChartBigComponent implements AfterViewInit {
   ) { }
 
   ngAfterViewInit(): void {
-    this.graphLayout = { ...this.data.graphLayout };
+    this.lineChartLayout = Clone.deepCopy(this.data.lineChartLayout);
 
-    if (this.graphLayout.width) delete this.graphLayout.width;
-    if (this.graphLayout.height) delete this.graphLayout.height;
-
-    this.graphLayout.autosize = true;
-    this.graphLayout.margin.l = 40;
+    this.lineChartLayout.autosize = true;
+    this.lineChartLayout.margin.l = 40;
 
     this.graphData = this.data.metric.graphData;
     this.cdRef.detectChanges();

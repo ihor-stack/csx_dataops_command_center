@@ -30,8 +30,8 @@
         </div>
         <plotly-plot *ngIf="item.graphData"
           [data]="[item.graphData]"
-          [layout]="graphLayout"
-          [config]="graphConfig"
+          [layout]="lineChartLayout"
+          [config]="lineChartConfig"
         ></plotly-plot>
         <div class="metrics-failed" *ngIf="!item.graphData">Data loading failed</div>
       </div>
@@ -41,15 +41,15 @@
   </div>
   <div class="indicators">
     <div>
-      <plotly-plot [data]="indicator1" [layout]="indicatorsLayout" [config]="{ displayModeBar: false }"></plotly-plot>
+      <plotly-plot [data]="gaugeConfig" [layout]="gaugeLayout" [config]="{ displayModeBar: false }"></plotly-plot>
     </div>
 
     <div>
-      <plotly-plot [data]="indicator1" [layout]="indicatorsLayout" [config]="{ displayModeBar: false }"></plotly-plot>
+      <plotly-plot [data]="gaugeConfig" [layout]="gaugeLayout" [config]="{ displayModeBar: false }"></plotly-plot>
     </div>
 
     <div>
-      <plotly-plot [data]="indicator1" [layout]="indicatorsLayout" [config]="{ displayModeBar: false }"></plotly-plot>
+      <plotly-plot [data]="gaugeConfig" [layout]="gaugeLayout" [config]="{ displayModeBar: false }"></plotly-plot>
     </div>
   </div>
 </div>

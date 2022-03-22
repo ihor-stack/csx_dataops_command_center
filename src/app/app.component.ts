@@ -1,5 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { debounceTime, fromEvent } from 'rxjs';
 import { BaseComponent } from '@core/base.component';
+import { CommonService } from '@services/common.service';
 import { SpinnerService } from '@services/spinner.service';
 import { RoutePaths } from '@defs/route-paths';
 
@@ -19,6 +21,7 @@ export class AppComponent extends BaseComponent implements OnInit {
 
   constructor(
     private cdRef: ChangeDetectorRef,
+    private commonService: CommonService,
     private spinnerService: SpinnerService,
   ) {
     super();
@@ -31,7 +34,7 @@ export class AppComponent extends BaseComponent implements OnInit {
 
   // eslint-disable-next-line class-methods-use-this
   onBell() {
-    // for now, not clear what to do here
+    // not clear what to do here
   }
 
   ngOnInit(): void {
@@ -42,5 +45,17 @@ export class AppComponent extends BaseComponent implements OnInit {
         this.cdRef.detectChanges();
       }
     );
+
+    fromEvent(window, 'resize')
+      .pipe(debounceTime(500))
+      .subscribe((ev) => {
+        if (!ev || !ev.target) return;
+        const wnd = ev.target as Window;
+
+        this.commonService.resizeWindow$.next({
+          width: wnd.innerWidth,
+          height: wnd.innerHeight
+        });
+      });
   }
 }

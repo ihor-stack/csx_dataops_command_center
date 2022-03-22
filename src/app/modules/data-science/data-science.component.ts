@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { UntilDestroy, /* untilDestroyed */ } from '@ngneat/until-destroy';
 import {
   BehaviorSubject, Subject,
@@ -9,13 +9,18 @@ import {
   distinctUntilChanged, filter, map, tap
 } from 'rxjs/operators';
 */
+import {
+  defGaugeChartConfig, defGaugeChartLayout, defLineChartConfig, defLineChartLayout
+} from '@defs/chart-configs';
+import { Clone } from '@utils/clone-deep';
+import { NameValueItem, SimpleObject } from '@defs/common';
+import { getTail3Count } from '@utils/fns';
 
 import { AwsService } from '@services/aws.service';
 import { LoggerService } from '@services/logger.service';
 import { SettingsStorageService } from '@services/settings-storage.service';
 import { SpinnerService } from '@app/core/services/spinner.service';
 
-import { NameValueItem } from '@defs/common';
 import { HorizontalMenuEvent, HorizontalMenuItem } from '@shared/horizontal-menu/horizontal-menu.component';
 
 @UntilDestroy()
@@ -24,7 +29,7 @@ import { HorizontalMenuEvent, HorizontalMenuItem } from '@shared/horizontal-menu
   templateUrl: './data-science.component.html',
   styleUrls: ['./data-science.component.scss']
 })
-export class DataScienceComponent implements OnInit {
+export class DataScienceComponent implements OnInit, AfterViewInit {
   horMenuItems: HorizontalMenuItem[] = [
     {
       name: 'item1',
@@ -49,84 +54,77 @@ export class DataScienceComponent implements OnInit {
     }
   ];
 
-  mockData = {
-    primary: [],
-    secondary: []
-  };
+  mockData: any = {};
 
   displayedItem$ = new BehaviorSubject<string>('');
   reload$ = new Subject<boolean>();
   dummy = '';
 
-  public indicator1 = [{
-    domain: {
-      x: [0, 1],
-      y: [0, 1],
-    },
-    value: 450,
-    title: {
-      text: 'Max TaskInstanceFailures',
-      color: '#000',
-      font: {
-        size: 14,
-      },
-    },
-    type: 'indicator',
-    mode: 'gauge+number',
-    delta: {
-      reference: 400,
-    },
-    gauge: {
-      axis: {
-        range: [null, 500],
-      },
-      steps: [{
-        range: [0, 250],
-        color: 'lightgray',
-      }, {
-        range: [250, 400],
-        color: 'gray',
-      }],
-      threshold: {
-        line: {
-          color: 'red',
-          width: 4,
-        },
-        thickness: 0.75,
-        value: 490
-      }
-    }
-  }];
-
-  public indicatorsLayout = {
-    width: 200,
-    height: 170,
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    margin: {
-      l: 30,
-      r: 30,
-      b: 20,
-      t: 0,
-      pad: 0,
-    },
-    font: {
-      family: 'Nunito',
-      size: 14,
-      color: '#000',
-    },
-  };
+  lineChartLayout: SimpleObject;
+  lineChartConfig: SimpleObject;
+  gaugeLayout: SimpleObject;
+  gaugeConfig: SimpleObject[];
 
   constructor(
     private awsService: AwsService,
     private loggerService: LoggerService,
     private settingsStorageService: SettingsStorageService,
     private spinnerService: SpinnerService,
-  ) { }
+  ) {
+    this.lineChartLayout = Clone.deepCopy(defLineChartLayout);
+    // console.log('lineChartLayout', this.lineChartLayout);
+
+    this.lineChartConfig = Clone.deepCopy(defLineChartConfig);
+    // console.log('lineChartConfig', this.lineChartConfig);
+
+    this.gaugeLayout = Clone.deepCopy(defGaugeChartLayout);
+    this.gaugeConfig = Clone.deepCopy(defGaugeChartConfig);
+  }
 
   ngOnInit(): void {
-    // load data
     this.dummy = '1';
+    // load data
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.mockData = {
+        primary: {
+          line: { color: '#3B426E', width: 3 },
+          type: 'scatter',
+          x: [0, 1, 2, 3],
+          y: [2, 3, 4, 5]
+        },
+        secondary: [
+          {
+            graphData: {
+              line: { color: '#3B426E', width: 3 },
+              type: 'scatter',
+              x: [0, 1, 2, 3],
+              y: [2, 3, 4, 5]
+            }
+          },
+          /*
+          {
+            graphData: {
+              line: { color: '#3B426E', width: 3 },
+              type: 'scatter',
+              x: [0, 1, 2, 3],
+              y: [2, 3, 4, 5]
+            }
+          },
+          {
+            graphData: {
+              line: { color: '#3B426E', width: 3 },
+              type: 'scatter',
+              x: [0, 1, 2, 3],
+              y: [2, 3, 4, 5]
+            }
+          },
+          */
+        ]
+      };
+    }, 50);
   }
 
   onSelectHorMenuItem(data: HorizontalMenuEvent) {
@@ -135,5 +133,10 @@ export class DataScienceComponent implements OnInit {
 
   onSelectSubItem(val: string) {
     this.dummy = val;
+  }
+
+  getTailCount() {
+    if (!Array.isArray(this.mockData.secondary)) return [];
+    return getTail3Count(this.mockData.secondary.length);
   }
 }

@@ -13,39 +13,43 @@
     </li>
   </ul>
 
-  <div class="data-science-graphs-wr">
-    <div class="data-science-graphs">
-      <!---
-      <div *ngFor="let item of items">
-        <div class="graph-title">
-          <div>{{ item.name | splitWords }}</div>
-          <mat-icon (click)="hideMetrics(item.name)" title="Hide metrics">visibility_off</mat-icon>
-          <mat-icon (click)="showBigChart(item.name)" title="View big chart">open_in_full</mat-icon>
-        </div>
+  <div class="graphs-wr">
+    <div class="primary-graph">
+      <plotly-plot *ngIf="mockData.primary"
+        [data]="[mockData.primary]"
+        [layout]="lineChartLayout"
+        [config]="lineChartConfig"
+      ></plotly-plot>
+    </div>
+
+    <div class="secondary-graphs" *ngIf="mockData.secondary">
+      <div *ngFor="let item of mockData.secondary">
+        secondary
+        <!--
         <plotly-plot *ngIf="item.graphData"
           [data]="[item.graphData]"
-          [layout]="graphLayout"
-          [config]="graphConfig"
+          [layout]="lineChartLayout"
+          [config]="lineChartConfig"
         ></plotly-plot>
-        <div class="metrics-failed" *ngIf="!item.graphData">Data loading failed</div>
+        -->
+        <!-- <div class="metrics-failed" *ngIf="!item.graphData">Data loading failed</div> -->
       </div>
 
       <div *ngFor="let item of getTailCount()"></div>
-      -->
     </div>
   </div>
 
   <div class="indicators">
     <div>
-      <plotly-plot [data]="indicator1" [layout]="indicatorsLayout" [config]="{ displayModeBar: false }"></plotly-plot>
+      <plotly-plot [data]="gaugeConfig" [layout]="gaugeLayout" [config]="{ displayModeBar: false }"></plotly-plot>
     </div>
 
     <div>
-      <plotly-plot [data]="indicator1" [layout]="indicatorsLayout" [config]="{ displayModeBar: false }"></plotly-plot>
+      <plotly-plot [data]="gaugeConfig" [layout]="gaugeLayout" [config]="{ displayModeBar: false }"></plotly-plot>
     </div>
 
     <div>
-      <plotly-plot [data]="indicator1" [layout]="indicatorsLayout" [config]="{ displayModeBar: false }"></plotly-plot>
+      <plotly-plot [data]="gaugeConfig" [layout]="gaugeLayout" [config]="{ displayModeBar: false }"></plotly-plot>
     </div>
   </div>
 </div>

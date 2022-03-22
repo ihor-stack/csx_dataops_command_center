@@ -19,6 +19,13 @@ import { CloudwatchMetrics } from '@defs/aws-api';
 import {
   HiddenMetric, NamespaceConfig, NsMetric
 } from '@defs/metrics';
+import {
+  defGaugeChartConfig, defGaugeChartLayout, defLineChartConfig, defLineChartLayout
+} from '@defs/chart-configs';
+import { Clone } from '@utils/clone-deep';
+import { SimpleObject } from '@defs/common';
+import { getTail3Count } from '@utils/fns';
+
 import { ViewHiddenMetricsComponent } from './dialogs/view-hidden-metrics.dialog';
 import { MetricsChartBigComponent, MetricsChartBigData } from './dialogs/metrics-chart-big.dialog';
 
@@ -40,11 +47,6 @@ interface NsDimension {
   styleUrls: ['./cloud-metrics.component.scss'],
 })
 export class CloudMetricsComponent implements OnInit {
-  readonly chartFont = 'Nunito';
-  readonly chartBg = '#ccceda';
-  readonly chartPlotColor = '#3b426e';
-  readonly chartFontColor = '#000';
-
   namespaces: HorizontalMenuItem[] = [];
   displayedNamespace$ = new BehaviorSubject<string>('');
   reload$ = new Subject<boolean>();
@@ -55,122 +57,6 @@ export class CloudMetricsComponent implements OnInit {
 
   // list of all hidden metrics
   hiddenMetrics: HiddenMetric[] = [];
-  // curNsHiddenCount = 0;
-
-  public graphLayout = {
-    /*
-    title: {
-      text: 'Title',
-      font: {
-        family: this.chartFont,
-        size: 14,
-        // color: this.chartFontColor
-      },
-      xref: 'paper',
-      xanchor: 'center',
-    },
-    */
-    width: 300,
-    height: 250,
-    paper_bgcolor: 'transparent',
-    plot_bgcolor: this.chartBg,
-    margin: {
-      l: 40,
-      r: 10,
-      b: 50,
-      t: 10,
-      pad: 0,
-    },
-    xaxis: {
-      tickfont: {
-        family: this.chartFont,
-        size: 12,
-        color: this.chartFontColor,
-      },
-    },
-    yaxis: {
-      tickfont: {
-        family: this.chartFont,
-        size: 12,
-        color: this.chartFontColor,
-      },
-    },
-    showlegend: false,
-    legend: {
-      x: 0,
-      y: 1,
-      traceorder: 'normal',
-      font: {
-        family: this.chartFont,
-        size: 12,
-        color: '#000',
-      },
-    },
-  };
-
-  public graphConfig = {
-    displayModeBar: false,
-    responsive: true,
-  };
-
-  public indicator1 = [{
-    domain: {
-      x: [0, 1],
-      y: [0, 1],
-    },
-    value: 450,
-    title: {
-      text: 'Max TaskInstanceFailures',
-      color: '#000',
-      font: {
-        size: 14,
-      },
-    },
-    type: 'indicator',
-    mode: 'gauge+number',
-    delta: {
-      reference: 400,
-    },
-    gauge: {
-      axis: {
-        range: [null, 500],
-      },
-      steps: [{
-        range: [0, 250],
-        color: 'lightgray',
-      }, {
-        range: [250, 400],
-        color: 'gray',
-      }],
-      threshold: {
-        line: {
-          color: 'red',
-          width: 4,
-        },
-        thickness: 0.75,
-        value: 490
-      }
-    }
-  }];
-
-  public indicatorsLayout = {
-    width: 200,
-    height: 170,
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    margin: {
-      l: 30,
-      r: 30,
-      b: 20,
-      t: 0,
-      pad: 0,
-    },
-    font: {
-      family: 'Nunito',
-      size: 14,
-      color: '#000',
-    },
-  };
 
   viewHiddenMetricsDialogRef: MatDialogRef<ViewHiddenMetricsComponent> | undefined;
 
@@ -178,13 +64,26 @@ export class CloudMetricsComponent implements OnInit {
   nsDimensionsCtrl = new FormControl(null);
   activeDimensionIdx: number = -1;
 
+  lineChartLayout: SimpleObject;
+  lineChartConfig: SimpleObject;
+  gaugeLayout: SimpleObject;
+  gaugeConfig: SimpleObject[];
+
   constructor(
     private awsService: AwsService,
     private loggerService: LoggerService,
     private settingsStorageService: SettingsStorageService,
     private spinnerService: SpinnerService,
     public dialog: MatDialog,
-  ) { }
+  ) {
+    this.lineChartLayout = Clone.deepCopy(defLineChartLayout);
+    this.lineChartLayout['width'] = 300;
+    this.lineChartLayout['height'] = 250;
+
+    this.lineChartConfig = Clone.deepCopy(defLineChartConfig);
+    this.gaugeLayout = Clone.deepCopy(defGaugeChartLayout);
+    this.gaugeConfig = Clone.deepCopy(defGaugeChartConfig);
+  }
 
   ngOnInit(): void {
     this.loadHidden();
@@ -388,8 +287,7 @@ export class CloudMetricsComponent implements OnInit {
   }
 
   getTailCount() {
-    const tmp = this.nsMetrics.length % 3;
-    return tmp ? Array(3 - tmp).fill(0) : [];
+    return getTail3Count(this.nsMetrics.length);
   }
 
   onSelectHorMenuItem(data: HorizontalMenuEvent) {
@@ -475,8 +373,8 @@ export class CloudMetricsComponent implements OnInit {
         data: {
           metricName: nsKey,
           metric,
-          graphLayout: this.graphLayout,
-          graphConfig: this.graphConfig,
+          lineChartLayout: this.lineChartLayout,
+          lineChartConfig: this.lineChartConfig,
         } as MetricsChartBigData
       }
     );

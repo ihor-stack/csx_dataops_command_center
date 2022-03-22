@@ -4,8 +4,8 @@
   <div class="graph-wrapper">
     <plotly-plot *ngIf="graphData"
       [data]="[graphData]"
-      [layout]="graphLayout"
-      [config]="data.graphConfig"
+      [layout]="lineChartLayout"
+      [config]="data.lineChartConfig"
     ></plotly-plot>
   </div>
 </mat-dialog-content>

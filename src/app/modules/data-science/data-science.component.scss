@@ -22,17 +22,23 @@
   }
 }
 
-.data-science-graphs-wr {
+.graphs-wr {
   flex-grow: 1;
 }
 
-.data-science-graphs {
+.primary-graph {
+  height: 300px;
+  width: 100%;
+}
+
+.secondary-graphs {
   display: grid;
   grid-template-rows: max-content max-content;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 33.33% 33.33% 33.33%;
   background: $gapColor;
   gap: $gapWidth $gapWidth;
   place-items: stretch;
+  border-top: $gapWidth solid $gapColor;
 
   & > div {
     background: #fff;
@@ -41,5 +47,6 @@
     justify-content: center;
     flex-direction: column;
     align-items: center;
+    height: 250px;
   }
 }
