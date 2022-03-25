@@ -16,8 +16,14 @@
     padding: 0.3rem 1rem;
     cursor: pointer;
 
-    & .active {
-      background-color: $navMenuItemBg;
+    &.active {
+      color: #fff;
+      background-color: $modulesMenuItemBg;
+    }
+
+    &:hover {
+      color: #fff;
+      background-color: $modulesMenuItemBg;
     }
   }
 }

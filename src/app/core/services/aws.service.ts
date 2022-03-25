@@ -135,9 +135,11 @@ export class AwsService {
     return this.callClientMethod<string[]>('listCloudwatchNamespacesGet');
   }
 
-  /*
-  opsgenieCreateAlertPost
+  opsgenieCreateAlert(params: any) {
+    return this.callClientMethod<any>('opsgenieCreateAlertPost', params);
+  }
 
+  /*
   s3BucketsGet
   s3BucketsBucketNameObjectsGet
   s3BucketsBucketNameObjectsTagsPost

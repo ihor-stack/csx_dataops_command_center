@@ -3,6 +3,7 @@ import { debounceTime, fromEvent } from 'rxjs';
 import { BaseComponent } from '@core/base.component';
 import { CommonService } from '@services/common.service';
 import { SpinnerService } from '@services/spinner.service';
+import { UserService } from '@services/user.service';
 import { RoutePaths } from '@defs/route-paths';
 
 @Component({
@@ -14,6 +15,7 @@ export class AppComponent extends BaseComponent implements OnInit {
   routePaths = RoutePaths;
   title = 'kedion';
 
+  userLogged: boolean;
   showNavMenu = false;
   showModulesMenu = false;
   showSpinner = false;
@@ -23,8 +25,10 @@ export class AppComponent extends BaseComponent implements OnInit {
     private cdRef: ChangeDetectorRef,
     private commonService: CommonService,
     private spinnerService: SpinnerService,
+    private userService: UserService,
   ) {
     super();
+    this.userLogged = this.userService.isLogged();
   }
 
   hideSideMenu() {
@@ -57,5 +61,9 @@ export class AppComponent extends BaseComponent implements OnInit {
           height: wnd.innerHeight
         });
       });
+
+    this.userService.isLogged$.subscribe((val) => {
+      this.userLogged = val;
+    });
   }
 }

@@ -26,8 +26,8 @@ import { Clone } from '@utils/clone-deep';
 import { SimpleObject } from '@defs/common';
 import { getTail3Count } from '@utils/fns';
 
-import { ViewHiddenMetricsComponent } from './dialogs/view-hidden-metrics.dialog';
-import { MetricsChartBigComponent, MetricsChartBigData } from './dialogs/metrics-chart-big.dialog';
+import { ViewHiddenMetricsComponent } from './dialogs/view-hidden/view-hidden-metrics.dialog';
+import { MetricsChartBigComponent, MetricsChartBigData } from './dialogs/chart-big/metrics-chart-big.dialog';
 
 interface AwsDimension {
   Name: string;

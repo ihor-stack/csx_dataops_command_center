@@ -1,7 +1,7 @@
 <header class="header">
   <img class="csx-logo" src="/assets/img/csxlogo_2.png" />
   <div class="title">COMMAND CENTER</div>
-  <div class="header-icons">
+  <div class="header-icons" *ngIf="this.userLogged">
     <span class="icon-bell"><img src="/assets/img/bell.svg" (click)="onBell()"/></span>
     <span class="icon-settings"><img src="/assets/img/settings.svg" (click)="showModulesMenu = true"/></span>
   </div>
@@ -12,6 +12,7 @@
 </div>
 
 <div
+  *ngIf="this.userLogged"
   [ngClass]="{ 'menu-container': true, visible: showNavMenu || showModulesMenu}"
   (click)="hideSideMenu()"
   >

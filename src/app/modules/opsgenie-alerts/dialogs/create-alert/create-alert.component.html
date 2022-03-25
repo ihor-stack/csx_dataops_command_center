@@ -1,0 +1,19 @@
+<mat-dialog-content class="">
+  <form [formGroup]="form">
+    <mat-form-field class="" appearance="fill">
+      <mat-label>Message</mat-label>
+      <input matInput formControlName="message">
+      <mat-error *ngIf="fieldHasErr('message', 'required')">
+        Please enter a message
+      </mat-error>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Close</button>
+  <button mat-button cdkFocusInitial
+    [disabled]="form.invalid"
+    (click)="onCreate()"
+  >Create</button>
+</mat-dialog-actions>
